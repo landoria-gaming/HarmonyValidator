@@ -7,6 +7,7 @@
     <ManagedPath>$(ValheimGamePath)\valheim_Data\Managed</ManagedPath>
     <RepositoryRoot>$(MSBuildThisFileDirectory)..\..\</RepositoryRoot>
     <HarmonyValidatorPath>$(RepositoryRoot)HarmonyValidator</HarmonyValidatorPath>
+    <HarmonyValidatorExe>$(HarmonyValidatorPath)\bin\Release\net48\HarmonyValidator.exe</HarmonyValidatorExe>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="BepInEx">

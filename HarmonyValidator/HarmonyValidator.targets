@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup>
-    <HarmonyValidatorExe Condition="'$(HarmonyValidatorExe)' == ''">$(MSBuildThisFileDirectory)bin\Release\net48\HarmonyValidator.exe</HarmonyValidatorExe>
+    <HarmonyValidatorExe Condition="'$(HarmonyValidatorExe)' == ''">$(MSBuildThisFileDirectory)HarmonyValidator.exe</HarmonyValidatorExe>
   </PropertyGroup>
   <Target Name="ValidateHarmonyTargets"
           AfterTargets="CoreCompile"
