@@ -1,42 +1,35 @@
 using Mono.Cecil;
+using Microsoft.Build.Framework;
 
 namespace Landoria.Build;
 
-// Runs the build validator without loading Unity or installing Harmony patches.
-internal static class Program
+// Validates Harmony patches directly inside the current MSBuild process.
+public sealed class HarmonyValidatorTask : Microsoft.Build.Utilities.Task
 {
-    internal static int Main(string[] args)
+    [Required]
+    public string AssemblyPath { get; set; } = string.Empty;
+
+    [Required]
+    public ITaskItem[] References { get; set; } = [];
+
+    public override bool Execute()
     {
         try
         {
-            return Run(args);
+            return Validate();
         }
         catch (Exception error)
         {
-            Console.Error.WriteLine($"HarmonyValidator : error SHV000: {error}");
-            return 1;
+            Log.LogErrorFromException(error, true);
+            return false;
         }
     }
 
-    private static int Run(string[] args)
+    private bool Validate()
     {
-        if (args.Length != 2 && args.Length != 3)
-        {
-            throw new ArgumentException("Expected assembly path followed by either "
-                + "a reference list, or two assembly search directories.");
-        }
-
         using var resolver = new DefaultAssemblyResolver();
-        IEnumerable<string?> directories = args.Length == 2
-            ? File.ReadAllLines(args[1]).Append(args[0]).Select(Path.GetDirectoryName)
-            : new[]
-            {
-                Path.GetDirectoryName(args[0]),
-                args[1],
-                args[2]
-            };
-
-        foreach (var directory in directories.Distinct())
+        foreach (var directory in References.Select(reference => reference.ItemSpec)
+            .Append(AssemblyPath).Select(Path.GetDirectoryName).Distinct())
         {
             if (!string.IsNullOrEmpty(directory))
             {
@@ -44,12 +37,27 @@ internal static class Program
             }
         }
 
-        using var assembly = AssemblyDefinition.ReadAssembly(args[0],
+        using var assembly = AssemblyDefinition.ReadAssembly(AssemblyPath,
             new ReaderParameters { AssemblyResolver = resolver });
-        var validator = new Validator(args[0]);
+        var validator = new Validator(Report);
         validator.Check(assembly.MainModule.Types);
-        Console.WriteLine($"Harmony targets: {validator.Checked} checked, "
+        Log.LogMessage(MessageImportance.High,
+            $"Harmony targets: {validator.Checked} checked, "
             + $"{validator.Errors} errors, {validator.Warnings} unverified.");
-        return validator.Errors == 0 ? 0 : 1;
+        return validator.Errors == 0;
+    }
+
+    private void Report(MethodDefinition patch, string code, string message,
+        bool warning)
+    {
+        string detail = $"{patch.DeclaringType.FullName}.{patch.Name}: {message}";
+        if (warning)
+        {
+            Log.LogWarning(null, code, null, AssemblyPath, 0, 0, 0, 0, detail);
+        }
+        else
+        {
+            Log.LogError(null, code, null, AssemblyPath, 0, 0, 0, 0, detail);
+        }
     }
 }

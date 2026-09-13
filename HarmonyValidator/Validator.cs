@@ -3,7 +3,8 @@ using Mono.Cecil;
 namespace Landoria.Build;
 
 // Resolves declarative Harmony targets against the assemblies used by the build.
-internal sealed class Validator(string assemblyPath)
+internal sealed class Validator(
+    Action<MethodDefinition, string, string, bool> reporter)
 {
     internal int Checked;
     internal int Errors;
@@ -141,8 +142,6 @@ internal sealed class Validator(string assemblyPath)
             Errors++;
         }
 
-        string level = warning ? "warning" : "error";
-        Console.WriteLine($"{assemblyPath} : {level} {code}: "
-            + $"{patch.DeclaringType.FullName}.{patch.Name}: {message}");
+        reporter(patch, code, message, warning);
     }
 }

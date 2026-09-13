@@ -1,0 +1,19 @@
+<Project>
+  <Target Name="MergeHarmonyValidatorDependencies" AfterTargets="Build">
+    <PropertyGroup>
+      <HarmonyValidatorMergedAssembly>$(IntermediateOutputPath)$(TargetName).merged$(TargetExt)</HarmonyValidatorMergedAssembly>
+    </PropertyGroup>
+    <ItemGroup>
+      <HarmonyValidatorAssembliesToMerge Include="$(TargetPath)" />
+      <HarmonyValidatorAssembliesToMerge Include="$(PkgMono_Cecil)\lib\netstandard2.0\Mono.Cecil.dll" />
+    </ItemGroup>
+    <ILRepack InputAssemblies="@(HarmonyValidatorAssembliesToMerge)"
+              OutputFile="$(HarmonyValidatorMergedAssembly)"
+              TargetKind="SameAsPrimaryAssembly"
+              LibraryPath="$(PkgMicrosoft_Build_Framework)\ref\netstandard2.0;$(PkgMicrosoft_Build_Utilities_Core)\ref\netstandard2.0"
+              DebugInfo="true"
+              Parallel="true" />
+    <Copy SourceFiles="$(HarmonyValidatorMergedAssembly)"
+          DestinationFiles="$(TargetPath)" />
+  </Target>
+</Project>

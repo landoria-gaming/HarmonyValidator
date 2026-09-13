@@ -7,7 +7,7 @@ the patch parameters are incorrect.
 
 ## Requirements
 
-- .NET Framework 4.8 for Harmony Validator
+- A .NET SDK with MSBuild
 - The framework and references required by the mod
 - An assembly that uses Harmony
 
@@ -24,7 +24,7 @@ The complete example is in [`examples/MyTestMod`](examples/MyTestMod/). It uses
 ```text
 HarmonyValidator/
   HarmonyValidator.targets
-  HarmonyValidator.exe
+  HarmonyValidator.dll
 examples/
   MyTestMod/
     MyTestMod.csproj
@@ -128,30 +128,9 @@ build fails:
 error SHV002: Target not found: FejdStartup.UpdateCamera
 ```
 
-## Command line
-
-The validator can also run without MSBuild:
-
-```bat
-HarmonyValidator.exe MyTestMod.dll "path\to\BepInEx\core" "path\to\Valheim\valheim_Data\Managed"
-```
-
-The last two arguments are assembly search directories. They can point to any
-folders containing the mod's dependencies.
-
-A successful validation prints:
-
-```text
-Harmony targets: 2 checked, 0 errors, 0 unverified.
-```
-
-The process returns exit code `0`. If a patch target or signature is invalid,
-the validator reports the error and returns exit code `1`:
-
-```text
-HarmonyValidator : error SHV002: Target not found: FejdStartup.UpdateCamera
-Harmony targets: 2 checked, 1 errors, 0 unverified.
-```
+Harmony Validator targets .NET Standard 2.0 and runs inside MSBuild. Mono.Cecil
+is merged into `HarmonyValidator.dll`, so only the DLL and targets file are
+required on Windows and Linux.
 
 ## License
 
