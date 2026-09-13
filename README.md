@@ -34,14 +34,33 @@ examples/
     UpdateCameraPatch.cs
 ```
 
-### 1. Import the validator
+### 1. Install the validator
 
-[`MyTestMod.csproj`](examples/MyTestMod/MyTestMod.csproj) defines the BepInEx and
-Valheim references, then imports the validator:
+Extract the release ZIP into your mod repository. Keep
+`HarmonyValidator.dll` and `HarmonyValidator.targets` together, for example:
+
+```text
+MyMod/
+  lib/
+    HarmonyValidator/
+      HarmonyValidator.dll
+      HarmonyValidator.targets
+  MyMod.csproj
+```
+
+Add the validator path and import to the mod's `.csproj` file:
 
 ```xml
+<PropertyGroup>
+  <HarmonyValidatorPath>$(MSBuildThisFileDirectory)lib\HarmonyValidator</HarmonyValidatorPath>
+</PropertyGroup>
+
 <Import Project="$(HarmonyValidatorPath)\HarmonyValidator.targets" />
 ```
+
+The targets file automatically loads `HarmonyValidator.dll` from the same
+directory. It runs the validator after compilation; no command-line invocation
+or additional dependency is required.
 
 The example expects these MSBuild properties:
 
@@ -112,7 +131,7 @@ internal static class UpdateCameraPatch
 ### 4. Build the mod
 
 ```bat
-dotnet build examples\MyTestMod\MyTestMod.csproj -p:BepInExPath="path\to\BepInEx" -p:ValheimGamePath="path\to\Valheim"
+dotnet build MyMod.csproj -p:BepInExPath="path\to\BepInEx" -p:ValheimGamePath="path\to\Valheim"
 ```
 
 The validator runs after compilation and before the final DLL is copied:
