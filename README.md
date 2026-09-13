@@ -7,7 +7,7 @@ the patch parameters are incorrect.
 
 ## Requirements
 
-- .NET 8 SDK for Harmony Validator
+- .NET Framework 4.8 for Harmony Validator
 - The framework and references required by the mod
 - An assembly that uses Harmony
 
@@ -24,6 +24,7 @@ The complete example is in [`examples/MyTestMod`](examples/MyTestMod/). It uses
 ```text
 HarmonyValidator/
   HarmonyValidator.targets
+  HarmonyValidator.exe
 examples/
   MyTestMod/
     MyTestMod.csproj
@@ -110,10 +111,8 @@ internal static class UpdateCameraPatch
 
 ### 4. Build the mod
 
-```powershell
-dotnet build examples/MyTestMod/MyTestMod.csproj `
-  -p:BepInExPath="path/to/BepInEx" `
-  -p:ValheimGamePath="path/to/Valheim"
+```bat
+dotnet build examples\MyTestMod\MyTestMod.csproj -p:BepInExPath="path\to\BepInEx" -p:ValheimGamePath="path\to\Valheim"
 ```
 
 The validator runs after compilation and before the final DLL is copied:
@@ -133,12 +132,26 @@ error SHV002: Target not found: FejdStartup.UpdateCamera
 
 The validator can also run without MSBuild:
 
-```text
-dotnet run --project HarmonyValidator/HarmonyValidator.csproj -- \
-  path/to/Assembly.dll path/to/references.txt
+```bat
+HarmonyValidator.exe MyTestMod.dll "path\to\BepInEx\core" "path\to\Valheim\valheim_Data\Managed"
 ```
 
-`references.txt` contains one assembly path per line.
+The last two arguments are assembly search directories. They can point to any
+folders containing the mod's dependencies.
+
+A successful validation prints:
+
+```text
+Harmony targets: 2 checked, 0 errors, 0 unverified.
+```
+
+The process returns exit code `0`. If a patch target or signature is invalid,
+the validator reports the error and returns exit code `1`:
+
+```text
+HarmonyValidator : error SHV002: Target not found: FejdStartup.UpdateCamera
+Harmony targets: 2 checked, 1 errors, 0 unverified.
+```
 
 ## License
 

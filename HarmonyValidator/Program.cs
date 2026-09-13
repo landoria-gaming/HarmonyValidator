@@ -20,14 +20,23 @@ internal static class Program
 
     private static int Run(string[] args)
     {
-        if (args.Length != 2)
+        if (args.Length != 2 && args.Length != 3)
         {
-            throw new ArgumentException("Expected assembly path and reference list.");
+            throw new ArgumentException("Expected assembly path followed by either "
+                + "a reference list, or two assembly search directories.");
         }
 
         using var resolver = new DefaultAssemblyResolver();
-        foreach (var directory in File.ReadAllLines(args[1])
-            .Append(args[0]).Select(Path.GetDirectoryName).Distinct())
+        IEnumerable<string?> directories = args.Length == 2
+            ? File.ReadAllLines(args[1]).Append(args[0]).Select(Path.GetDirectoryName)
+            : new[]
+            {
+                Path.GetDirectoryName(args[0]),
+                args[1],
+                args[2]
+            };
+
+        foreach (var directory in directories.Distinct())
         {
             if (!string.IsNullOrEmpty(directory))
             {

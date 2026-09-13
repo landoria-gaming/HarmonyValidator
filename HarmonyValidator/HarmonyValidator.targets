@@ -1,14 +1,14 @@
 <Project>
   <PropertyGroup>
-    <HvProject>$(MSBuildThisFileDirectory)HarmonyValidator.csproj</HvProject>
+    <HarmonyValidatorExe Condition="'$(HarmonyValidatorExe)' == ''">$(MSBuildThisFileDirectory)bin\Release\net48\HarmonyValidator.exe</HarmonyValidatorExe>
   </PropertyGroup>
   <Target Name="ValidateHarmonyTargets"
           AfterTargets="CoreCompile"
           BeforeTargets="CopyFilesToOutputDirectory;MergeLandoriaSharedLib"
           Condition="'$(DesignTimeBuild)' != 'true'">
+    <Error Condition="!Exists('$(HarmonyValidatorExe)')"
+           Text="HarmonyValidator executable not found: $(HarmonyValidatorExe). Build HarmonyValidator.csproj in Release first." />
     <PropertyGroup>
-      <_HvCmd>dotnet run --project &quot;$(HvProject)&quot;</_HvCmd>
-      <_HvCmd>$(_HvCmd) --configuration Release --no-launch-profile --</_HvCmd>
       <_HvAssembly>@(IntermediateAssembly->'%(FullPath)')</_HvAssembly>
       <_HvRefs>$(MSBuildProjectDirectory)/$(IntermediateOutputPath)</_HvRefs>
       <_HvRefs>$(_HvRefs)harmony-references.txt</_HvRefs>
@@ -16,6 +16,6 @@
     <WriteLinesToFile File="$(_HvRefs)"
                       Lines="@(ReferencePath->'%(FullPath)')"
                       Overwrite="true" />
-    <Exec Command="$(_HvCmd) &quot;$(_HvAssembly)&quot; &quot;$(_HvRefs)&quot;" />
+    <Exec Command="&quot;$(HarmonyValidatorExe)&quot; &quot;$(_HvAssembly)&quot; &quot;$(_HvRefs)&quot;" />
   </Target>
 </Project>

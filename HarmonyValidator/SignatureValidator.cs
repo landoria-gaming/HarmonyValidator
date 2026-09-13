@@ -121,7 +121,7 @@ internal sealed class SignatureValidator(Action<string, string, bool> report)
         var argument = original.Parameters.FirstOrDefault(p => p.Name == parameter.Name);
         if (parameter.Name.StartsWith("__", StringComparison.Ordinal))
         {
-            argument = int.TryParse(parameter.Name[2..], out int index)
+            argument = int.TryParse(parameter.Name.Substring(2), out int index)
                 && index >= 0 && index < original.Parameters.Count
                 ? original.Parameters[index] : null;
         }
@@ -230,7 +230,7 @@ internal sealed class SignatureValidator(Action<string, string, bool> report)
 
     private void Field(ParameterDefinition parameter)
     {
-        string name = parameter.Name[3..];
+        string name = parameter.Name.Substring(3);
         if (int.TryParse(name, out _))
         {
             Warn(parameter.Name + ": Runtime field ordering was not verified.");
