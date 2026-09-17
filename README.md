@@ -151,6 +151,19 @@ Harmony Validator targets .NET Standard 2.0 and runs inside MSBuild. Mono.Cecil
 is merged into `HarmonyValidator.dll`, so only the DLL and targets file are
 required on Windows and Linux.
 
+## Snapshot builds
+
+The [Build snapshot workflow](.github/workflows/snapshot.yml) runs on every push
+to `main` and can also be started manually from GitHub's **Actions** tab using
+**Run workflow**. It builds Harmony Validator in Release mode with a prerelease
+version such as `1.0.0-snapshot.42.1` (run number and attempt).
+
+Download the `HarmonyValidator-snapshot.<run>.<attempt>` artifact from the
+completed workflow run. The ZIP contains `HarmonyValidator.dll`, with Mono.Cecil
+merged in, `HarmonyValidator.targets`, and the license. Extract it into your mod
+repository and follow the installation instructions above. Snapshot artifacts
+are retained for 30 days.
+
 ## License
 
 MIT

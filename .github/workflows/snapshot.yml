@@ -1,0 +1,49 @@
+name: Build snapshot
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  snapshot:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    env:
+      SNAPSHOT_SUFFIX: snapshot.${{ github.run_number }}.${{ github.run_attempt }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Build snapshot
+        run: >-
+          dotnet build HarmonyValidator/HarmonyValidator.csproj
+          --configuration Release
+          -p:VersionSuffix=${{ env.SNAPSHOT_SUFFIX }}
+          -p:ContinuousIntegrationBuild=true
+          -p:SourceRevisionId=${{ github.sha }}
+
+      - name: Prepare snapshot artifact
+        shell: pwsh
+        run: |
+          $snapshotDirectory = Join-Path $env:RUNNER_TEMP 'HarmonyValidator-snapshot'
+          New-Item -ItemType Directory -Path $snapshotDirectory -Force | Out-Null
+          Copy-Item -LiteralPath 'HarmonyValidator/bin/Release/netstandard2.0/HarmonyValidator.dll' -Destination $snapshotDirectory
+          Copy-Item -LiteralPath 'HarmonyValidator/HarmonyValidator.targets' -Destination $snapshotDirectory
+          Copy-Item -LiteralPath 'LICENSE' -Destination $snapshotDirectory
+
+      - name: Upload snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: HarmonyValidator-${{ env.SNAPSHOT_SUFFIX }}
+          path: ${{ runner.temp }}/HarmonyValidator-snapshot/
+          if-no-files-found: error
+          retention-days: 30
