@@ -151,6 +151,50 @@ Harmony Validator targets .NET Standard 2.0 and runs inside MSBuild. Mono.Cecil
 is merged into `HarmonyValidator.dll`, so only the DLL and targets file are
 required on Windows and Linux.
 
+## NuGet releases
+
+After publication on nuget.org, install the stable release with:
+
+```sh
+dotnet add MyMod.csproj package HarmonyValidator --version 1.0.0
+```
+
+Alternatively, download `HarmonyValidator.1.0.0.nupkg` from the
+[v1.0.0 release](https://github.com/landoria-gaming/HarmonyValidator/releases/tag/v1.0.0)
+and put it in a local NuGet source directory. Install it with:
+
+```sh
+dotnet add MyMod.csproj package HarmonyValidator --version 1.0.0 --source ./local-packages
+```
+
+Set `PrivateAssets="all"` on the package reference. The validator targets are
+imported automatically; no manual import is needed.
+
+The **Publish release to nuget.org** workflow packages the DLL and targets from
+the existing release ZIP, attaches the `.nupkg` to that release, and publishes
+it on nuget.org. It runs when a release is published, or manually with a release
+tag such as `v1.0.0`.
+
+Publication uses [NuGet Trusted Publishing](https://learn.microsoft.com/en-us/nuget/nuget-org/trusted-publishing)
+with GitHub OIDC and a temporary API key. No stored API key is required.
+
+On nuget.org, open **Trusted Publishing** from your account menu and create a
+GitHub policy with:
+
+| Field | Value |
+| --- | --- |
+| Repository Owner | `landoria-gaming` |
+| Repository | `HarmonyValidator` |
+| Workflow File | `release-nuget.yml` (file name only) |
+| Environment | Leave empty |
+| Package scope | `HarmonyValidator`, with permission to push new packages and versions |
+
+In the GitHub repository, add an Actions **variable** named `NUGET_USER` with
+your nuget.org profile username (not your email address). Use the account that
+owns the policy or is authorized under its organization. To publish the existing
+`1.0.0` release, run **Publish release to nuget.org** manually with `v1.0.0`
+after the workflow has been pushed to the default branch.
+
 ## Snapshot builds
 
 The [Build snapshot workflow](.github/workflows/snapshot.yml) runs on every push
@@ -160,9 +204,24 @@ version such as `1.0.0-snapshot.42.1` (run number and attempt).
 
 Download the `HarmonyValidator-snapshot.<run>.<attempt>` artifact from the
 completed workflow run. The ZIP contains `HarmonyValidator.dll`, with Mono.Cecil
-merged in, `HarmonyValidator.targets`, and the license. Extract it into your mod
+merged in, `HarmonyValidator.targets`, the license, and a snapshot `.nupkg`.
+Extract the DLL and targets into your mod
 repository and follow the installation instructions above. Snapshot artifacts
 are retained for 30 days.
+
+Alternatively, put the downloaded `.nupkg` in a local NuGet source directory
+and install it in your mod project:
+
+```sh
+dotnet add MyMod.csproj package HarmonyValidator --version 1.0.0-snapshot.42.1 --source ./local-packages
+```
+
+Use the version from the downloaded package and add `PrivateAssets="all"` to
+the resulting `PackageReference`. NuGet imports the validator targets
+automatically; no manual targets import or `HarmonyValidatorPath` is needed.
+The package contains the merged DLL as a build task, with no runtime references
+added to the mod. The workflow generates the package as an artifact; it does not
+publish it to a NuGet feed.
 
 ## License
 

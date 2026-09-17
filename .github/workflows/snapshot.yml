@@ -31,6 +31,15 @@ jobs:
           -p:ContinuousIntegrationBuild=true
           -p:SourceRevisionId=${{ github.sha }}
 
+      - name: Pack snapshot NuGet package
+        run: >-
+          dotnet pack HarmonyValidator/HarmonyValidator.csproj
+          --configuration Release --no-build
+          --output "${{ runner.temp }}/HarmonyValidator-snapshot"
+          -p:VersionSuffix=${{ env.SNAPSHOT_SUFFIX }}
+          -p:ContinuousIntegrationBuild=true
+          -p:SourceRevisionId=${{ github.sha }}
+
       - name: Prepare snapshot artifact
         shell: pwsh
         run: |

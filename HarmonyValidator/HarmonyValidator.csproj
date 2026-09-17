@@ -4,6 +4,14 @@
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <PackageId>HarmonyValidator</PackageId>
+    <Authors>Landoria</Authors>
+    <Description>Validates Harmony patch targets and signatures during MSBuild.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/landoria-gaming/HarmonyValidator</RepositoryUrl>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="ILRepack.Lib.MSBuild.Task" Version="2.0.44"
@@ -16,5 +24,11 @@
                       GeneratePathProperty="true" />
     <PackageReference Include="Mono.Cecil" Version="0.11.6"
                       GeneratePathProperty="true" ExcludeAssets="runtime" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="$(OutputPath)HarmonyValidator.dll" Pack="true" PackagePath="build/" />
+    <None Update="HarmonyValidator.targets" Pack="true" PackagePath="build/" />
+    <None Include="../README.md" Pack="true" PackagePath="/" />
+    <None Include="../LICENSE" Pack="true" PackagePath="/" />
   </ItemGroup>
 </Project>

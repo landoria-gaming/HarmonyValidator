@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<package>
+  <metadata>
+    <id>HarmonyValidator</id>
+    <version>$version$</version>
+    <authors>Landoria</authors>
+    <description>Validates Harmony patch targets and signatures during MSBuild.</description>
+    <license type="expression">MIT</license>
+    <repository type="git" url="https://github.com/landoria-gaming/HarmonyValidator" />
+  </metadata>
+  <files>
+    <file src="HarmonyValidator.dll" target="build" />
+    <file src="HarmonyValidator.targets" target="build" />
+  </files>
+</package>

@@ -1,0 +1,94 @@
+name: Publish release to nuget.org
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag to publish
+        required: true
+        default: v1.0.0
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-nuget-${{ inputs.tag || github.event.release.tag_name }}
+  cancel-in-progress: false
+
+jobs:
+  package:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      id-token: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_TAG: ${{ inputs.tag || github.event.release.tag_name }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Package existing release
+        shell: pwsh
+        run: |
+          if ($env:RELEASE_TAG -notmatch '^v?(\d+\.\d+\.\d+)$') {
+            throw 'Expected a stable release tag such as v1.0.0.'
+          }
+          $version = $Matches[1]
+          "PACKAGE_VERSION=$version" >> $env:GITHUB_ENV
+          $releaseDirectory = Join-Path $env:RUNNER_TEMP 'release-content'
+          $packageDirectory = Join-Path $env:RUNNER_TEMP 'release-packages'
+          New-Item -ItemType Directory -Path $releaseDirectory -Force | Out-Null
+          gh release download $env:RELEASE_TAG --pattern "HarmonyValidator-$version.zip" --dir $releaseDirectory
+          if ($LASTEXITCODE -ne 0) { throw 'Release download failed.' }
+          Expand-Archive -LiteralPath "$releaseDirectory/HarmonyValidator-$version.zip" -DestinationPath $releaseDirectory
+          Copy-Item packaging/HarmonyValidator.nuspec -Destination $releaseDirectory
+          Push-Location $releaseDirectory
+          try {
+            dotnet pack HarmonyValidator.nuspec --version $version --output $packageDirectory
+          } finally {
+            Pop-Location
+          }
+          if ($LASTEXITCODE -ne 0) { throw 'NuGet packaging failed.' }
+          gh release upload $env:RELEASE_TAG "$packageDirectory/HarmonyValidator.$version.nupkg" --clobber
+          if ($LASTEXITCODE -ne 0) { throw 'Release upload failed.' }
+
+      - name: Upload NuGet artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: HarmonyValidator-${{ env.PACKAGE_VERSION }}-nuget
+          path: ${{ runner.temp }}/release-packages/*.nupkg
+          if-no-files-found: error
+
+      - name: Check NuGet account configuration
+        shell: pwsh
+        env:
+          NUGET_USER: ${{ vars.NUGET_USER }}
+        run: |
+          if (-not $env:NUGET_USER) {
+            throw 'Set the repository Actions variable NUGET_USER to your nuget.org profile username.'
+          }
+
+      - name: Authenticate with NuGet Trusted Publishing
+        uses: NuGet/login@v1
+        id: nuget-login
+        with:
+          user: ${{ vars.NUGET_USER }}
+
+      - name: Publish to nuget.org
+        shell: pwsh
+        env:
+          NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
+        run: |
+          if (-not $env:NUGET_API_KEY) {
+            throw 'NuGet Trusted Publishing did not return a temporary API key.'
+          }
+          $packagePath = Join-Path $env:RUNNER_TEMP "release-packages/HarmonyValidator.$($env:PACKAGE_VERSION).nupkg"
+          dotnet nuget push $packagePath --source https://api.nuget.org/v3/index.json --api-key $env:NUGET_API_KEY --skip-duplicate
+          if ($LASTEXITCODE -ne 0) { throw 'Publication to nuget.org failed.' }
